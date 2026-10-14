@@ -1,0 +1,84 @@
+<!--
+  Searchable dropdown: a button showing the current choice; clicking it opens a popup with a
+  search box and a filtered list. Used for country, city, method and notify-minutes.
+-->
+<UserControl x:Class="PrayerBar.SearchPicker"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Focusable="False">
+    <Grid>
+        <ToggleButton x:Name="Toggle" Cursor="Hand" Focusable="True"
+                      Checked="OnToggleChecked">
+            <ToggleButton.Template>
+                <ControlTemplate TargetType="ToggleButton">
+                    <Border x:Name="Bd" Background="{DynamicResource Brush.Control}" BorderBrush="{DynamicResource Brush.ControlBorder}"
+                            BorderThickness="1" CornerRadius="4" Padding="10,6">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <ContentPresenter VerticalAlignment="Center" />
+                            <!-- Chevron drawn as a Path so it mirrors correctly in RTL. -->
+                            <Path Grid.Column="1" Data="M0,0 L4.5,4.5 L9,0" Stroke="{DynamicResource Brush.SubText}" StrokeThickness="1.2"
+                                  VerticalAlignment="Center" Margin="10,1,0,0" />
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.ControlHover}" />
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Brush.Accent}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Bd" Property="Opacity" Value="0.5" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </ToggleButton.Template>
+            <TextBlock x:Name="SelectedText" Foreground="{DynamicResource Brush.Text}" TextTrimming="CharacterEllipsis" />
+        </ToggleButton>
+
+        <Popup x:Name="DropPopup" PlacementTarget="{Binding ElementName=Toggle}" Placement="Bottom" VerticalOffset="4"
+               StaysOpen="False" AllowsTransparency="True" PopupAnimation="Fade"
+               IsOpen="{Binding IsChecked, ElementName=Toggle, Mode=TwoWay}"
+               Opened="OnPopupOpened">
+            <Border Background="{DynamicResource Brush.Popup}" BorderBrush="{DynamicResource Brush.ControlBorder}"
+                    BorderThickness="1" CornerRadius="8" Padding="6" Margin="0,0,8,8"
+                    MinWidth="{Binding ActualWidth, ElementName=Toggle}">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="12" ShadowDepth="2" Opacity="0.25" />
+                </Border.Effect>
+                <StackPanel>
+                    <Grid x:Name="SearchRow" Margin="0,0,0,6">
+                        <TextBox x:Name="Search" Style="{StaticResource SearchBox}"
+                                 TextChanged="OnSearchChanged" PreviewKeyDown="OnSearchKeyDown" />
+                        <TextBlock x:Name="Placeholder" IsHitTestVisible="False" Margin="10,0" VerticalAlignment="Center"
+                                   Foreground="{DynamicResource Brush.SubText}" />
+                    </Grid>
+                    <ListBox x:Name="List" MaxHeight="300" BorderThickness="0" Background="Transparent"
+                             ItemContainerStyle="{StaticResource PickerItem}"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                             VirtualizingPanel.IsVirtualizing="True"
+                             PreviewMouseLeftButtonUp="OnListClick" PreviewKeyDown="OnListKeyDown">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="{Binding Primary}" TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Grid.Column="1" Text="{Binding Secondary}" Margin="12,0,0,0"
+                                               Foreground="{DynamicResource Brush.SubText}" FontSize="12" VerticalAlignment="Center" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                    <TextBlock x:Name="Empty" Visibility="Collapsed" Margin="10,6" Foreground="{DynamicResource Brush.SubText}" />
+                </StackPanel>
+            </Border>
+        </Popup>
+    </Grid>
+</UserControl>

@@ -3,12 +3,20 @@ using System.Windows.Forms;
 
 namespace PrayerBar;
 
-/// <summary>Notification-area icon with the app menu (Arabic, right-to-left).</summary>
+/// <summary>
+/// Notification-area icon and the app menu (also shown when the bar is right-clicked).
+/// WinForms' NotifyIcon is used because WPF has no tray icon; it also re-adds itself
+/// automatically when Explorer restarts (it listens for "TaskbarCreated" internally).
+/// </summary>
 public sealed class TrayIcon : IDisposable
 {
     private readonly NotifyIcon _icon;
+    private readonly ContextMenuStrip _menu;
     private readonly ToolStripMenuItem _header;
+    private readonly ToolStripMenuItem _settings;
     private readonly ToolStripMenuItem _startup;
+    private readonly ToolStripMenuItem _refresh;
+    private readonly ToolStripMenuItem _exit;
     private readonly Icon _image;
 
     public event Action? SettingsRequested;
@@ -20,32 +28,49 @@ public sealed class TrayIcon : IDisposable
         _image = LoadIcon();
 
         _header = new ToolStripMenuItem("…") { Enabled = false };
-        var settings = new ToolStripMenuItem("الإعدادات…", null, (_, _) => SettingsRequested?.Invoke());
-        _startup = new ToolStripMenuItem("التشغيل مع بدء ويندوز", null, OnStartupClicked);
-        var refresh = new ToolStripMenuItem("تحديث الأوقات", null, (_, _) => RefreshRequested?.Invoke());
-        var exit = new ToolStripMenuItem("خروج", null, (_, _) => ExitRequested?.Invoke());
+        _settings = new ToolStripMenuItem("", null, (_, _) => SettingsRequested?.Invoke());
+        _startup = new ToolStripMenuItem("", null, OnStartupClicked);
+        _refresh = new ToolStripMenuItem("", null, (_, _) => RefreshRequested?.Invoke());
+        _exit = new ToolStripMenuItem("", null, (_, _) => ExitRequested?.Invoke());
 
-        var menu = new ContextMenuStrip { RightToLeft = RightToLeft.Yes, ShowImageMargin = false };
-        menu.Items.AddRange(new ToolStripItem[]
+        _menu = new ContextMenuStrip { ShowImageMargin = false, Padding = new Padding(2, 4, 2, 4) };
+        _menu.Items.AddRange(new ToolStripItem[]
         {
-            _header, new ToolStripSeparator(), settings, _startup, refresh, new ToolStripSeparator(), exit,
+            _header, new ToolStripSeparator(), _settings, _startup, _refresh, new ToolStripSeparator(), _exit,
         });
-        menu.Opening += (_, _) => _startup.Checked = SafeIsStartupEnabled();
+        // Read the registry only when the menu opens, so the check mark is never stale.
+        _menu.Opening += (_, _) => _startup.Checked = SafeIsStartupEnabled();
 
-        _icon = new NotifyIcon
-        {
-            Icon = _image,
-            Text = "PrayerBar",
-            ContextMenuStrip = menu,
-            Visible = true,
-        };
+        _icon = new NotifyIcon { Icon = _image, Text = "PrayerBar", ContextMenuStrip = _menu, Visible = true };
         _icon.DoubleClick += (_, _) => SettingsRequested?.Invoke();
+
+        ApplyLanguage();
+        ApplyTheme();
     }
 
     public NotifyIcon NotifyIcon => _icon;
 
-    public void ShowMenu(Point screenPoint) => _icon.ContextMenuStrip!.Show(screenPoint);
+    public void ShowMenu(Point screenPoint) => _menu.Show(screenPoint);
 
+    /// <summary>Re-labels the menu in the current <see cref="Loc"/> language.</summary>
+    public void ApplyLanguage()
+    {
+        _menu.RightToLeft = Loc.Arabic ? RightToLeft.Yes : RightToLeft.No;
+        _settings.Text = Loc.T("Menu.Settings");
+        _startup.Text = Loc.T("Menu.Startup");
+        _refresh.Text = Loc.T("Menu.Refresh");
+        _exit.Text = Loc.T("Menu.Exit");
+    }
+
+    /// <summary>WinForms menus ignore Windows dark mode, so paint them with our own colors.</summary>
+    public void ApplyTheme()
+    {
+        _menu.Renderer = new ToolStripProfessionalRenderer(new MenuColors(Theme.IsDark)) { RoundedEdges = false };
+        _menu.ForeColor = Theme.IsDark ? Color.White : Color.FromArgb(0x1B, 0x1B, 0x1B);
+        _menu.Font = new Font("Segoe UI", 9.5f);
+    }
+
+    /// <summary>Header row ("Fajr in 01:02:03") and hover text of the icon.</summary>
     public void SetStatus(string header, string tooltip)
     {
         _header.Text = header;
@@ -79,10 +104,41 @@ public sealed class TrayIcon : IDisposable
         return new Icon(stream, SystemInformation.SmallIconSize);
     }
 
+    /// <summary>Menu palette matching Windows 11 light/dark context menus.</summary>
+    private sealed class MenuColors : ProfessionalColorTable
+    {
+        private readonly Color _bg, _hover, _border, _sep;
+
+        public MenuColors(bool dark)
+        {
+            _bg = dark ? Color.FromArgb(0x2C, 0x2C, 0x2C) : Color.FromArgb(0xF9, 0xF9, 0xF9);
+            _hover = dark ? Color.FromArgb(0x3D, 0x3D, 0x3D) : Color.FromArgb(0xE9, 0xE9, 0xE9);
+            _border = dark ? Color.FromArgb(0x40, 0x40, 0x40) : Color.FromArgb(0xD6, 0xD6, 0xD6);
+            _sep = dark ? Color.FromArgb(0x45, 0x45, 0x45) : Color.FromArgb(0xE0, 0xE0, 0xE0);
+            UseSystemColors = false;
+        }
+
+        public override Color ToolStripDropDownBackground => _bg;
+        public override Color ImageMarginGradientBegin => _bg;
+        public override Color ImageMarginGradientMiddle => _bg;
+        public override Color ImageMarginGradientEnd => _bg;
+        public override Color MenuBorder => _border;
+        public override Color MenuItemBorder => _hover;
+        public override Color MenuItemSelected => _hover;
+        public override Color MenuItemSelectedGradientBegin => _hover;
+        public override Color MenuItemSelectedGradientEnd => _hover;
+        public override Color SeparatorDark => _sep;
+        public override Color SeparatorLight => _bg;
+        public override Color CheckBackground => _hover;
+        public override Color CheckSelectedBackground => _hover;
+        public override Color CheckPressedBackground => _hover;
+    }
+
     public void Dispose()
     {
         _icon.Visible = false;
         _icon.Dispose();
+        _menu.Dispose();
         _image.Dispose();
     }
 }

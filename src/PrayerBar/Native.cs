@@ -51,6 +51,15 @@ internal static class Native
     public const uint SWP_NOACTIVATE = 0x0010;
     public const uint SWP_SHOWWINDOW = 0x0040;
     public const uint SWP_FRAMECHANGED = 0x0020;
+    public const uint SWP_HIDEWINDOW = 0x0080;
+
+    public const uint GA_ROOT = 2;
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct POINT
+    {
+        public int X, Y;
+    }
 
     public const uint ABM_GETSTATE = 0x00000004;
     public const int ABS_AUTOHIDE = 0x0000001;
@@ -113,6 +122,26 @@ internal static class Native
 
     [DllImport("user32.dll")]
     public static extern IntPtr GetForegroundWindow();
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool SetForegroundWindow(IntPtr hWnd);
+
+    [DllImport("user32.dll")]
+    public static extern IntPtr WindowFromPoint(POINT point);
+
+    [DllImport("user32.dll")]
+    public static extern IntPtr GetAncestor(IntPtr hWnd, uint flags);
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    private static extern int GetClassName(IntPtr hWnd, System.Text.StringBuilder name, int max);
+
+    public static string ClassName(IntPtr hWnd)
+    {
+        var sb = new System.Text.StringBuilder(256);
+        GetClassName(hWnd, sb, sb.Capacity);
+        return sb.ToString();
+    }
 
     [DllImport("shell32.dll")]
     public static extern IntPtr SHAppBarMessage(uint msg, ref APPBARDATA data);
