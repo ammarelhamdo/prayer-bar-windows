@@ -22,6 +22,12 @@ public sealed class AppSettings
     public double Longitude { get; set; } = 37.3833;
     public string TimeZoneId { get; set; } = "Europe/Istanbul";
 
+    /// <summary>
+    /// Embed the label inside the taskbar (SetParent). When false, or if embedding fails,
+    /// a TopMost window that follows the taskbar is used instead.
+    /// </summary>
+    public bool EmbedInTaskbar { get; set; } = true;
+
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
 
     public static AppSettings Load()

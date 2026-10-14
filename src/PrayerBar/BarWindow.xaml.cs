@@ -33,6 +33,9 @@ public partial class BarWindow : Window
 
     public bool IsAttached => _attached;
 
+    /// <summary>True when already embedded in the given (current) taskbar window.</summary>
+    public bool IsAttachedTo(IntPtr taskbar) => _attached && _taskbar == taskbar && Native.IsWindow(taskbar);
+
     /// <summary>True when the taskbar this window was attached to has been destroyed (Explorer restart).</summary>
     public bool IsOrphaned => _taskbar != IntPtr.Zero && !Native.IsWindow(_taskbar);
 

@@ -97,8 +97,14 @@ public partial class App : Application
     {
         if (msg == _taskbarCreatedMsg && _taskbarCreatedMsg != 0)
         {
-            PrayerService.Log("TaskbarCreated: re-attaching");
-            Dispatcher.BeginInvoke(() => { RecreateBar(); Tick(); }, DispatcherPriority.Background);
+            Dispatcher.BeginInvoke(() =>
+            {
+                // The 1-second tick may already have re-attached to the new taskbar.
+                if (_bar != null && _bar.IsAttachedTo(Native.FindWindow("Shell_TrayWnd", null))) return;
+                PrayerService.Log("TaskbarCreated: re-attaching");
+                RecreateBar();
+                Tick();
+            }, DispatcherPriority.Background);
         }
         else if (msg is Native.WM_DISPLAYCHANGE or Native.WM_SETTINGCHANGE or Native.WM_DPICHANGED)
         {
@@ -110,7 +116,7 @@ public partial class App : Application
     private void CreateBar()
     {
         PrayerService.Log("Creating bar window");
-        _bar = new BarWindow(allowAttach: true);
+        _bar = new BarWindow(allowAttach: _settings.EmbedInTaskbar);
         _bar.Closed += OnBarClosed;
         _bar.MouseRightButtonUp += (_, _) => _tray?.ShowMenu(System.Windows.Forms.Cursor.Position);
         _bar.Show();
