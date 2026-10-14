@@ -64,8 +64,18 @@ public partial class App : Application
 
         // "Local\" scopes the mutex to this Windows session, so other users can run their own copy.
         _mutex = new Mutex(true, @"Local\PrayerBar.SingleInstance.7F3A2C1E", out bool createdNew);
+        bool uninstall = e.Args.Any(a => a.Equals("--uninstall", StringComparison.OrdinalIgnoreCase));
+        if (uninstall) Loc.Arabic = AppSettings.Load().IsArabic; // read before the data folder is deleted
         if (!createdNew)
         {
+            if (uninstall)
+                ShowTopmostMessage(Loc.T("Uninstall.Running"), MessageBoxImage.Warning);
+            Shutdown();
+            return;
+        }
+        if (uninstall)
+        {
+            Uninstall();
             Shutdown();
             return;
         }
@@ -108,6 +118,28 @@ public partial class App : Application
         _timer.Start();
 
         _ = RefreshAsync(force: false, announce: false);
+    }
+
+    /// <summary>
+    /// <c>PrayerBar.exe --uninstall</c>: removes everything the app wrote outside its own exe —
+    /// the HKCU Run entry, the toast registration (AppUserModelId + icon copy, created by
+    /// Microsoft.Toolkit.Uwp.Notifications) and %AppData%\PrayerBar. Deleting the exe is then
+    /// all that is left.
+    /// </summary>
+    private static void Uninstall()
+    {
+        try { StartupManager.SetEnabled(false); } catch { }
+        try { Microsoft.Toolkit.Uwp.Notifications.ToastNotificationManagerCompat.Uninstall(); } catch { }
+        try { System.IO.Directory.Delete(AppSettings.DataDir, recursive: true); } catch { }
+        ShowTopmostMessage(Loc.T("Uninstall.Done"), MessageBoxImage.Information);
+    }
+
+    /// <summary>Message box that appears on top even when this process is not in the foreground
+    /// (no main window exists to own it).</summary>
+    private static void ShowTopmostMessage(string text, MessageBoxImage icon)
+    {
+        var options = MessageBoxOptions.DefaultDesktopOnly | (Loc.Arabic ? MessageBoxOptions.RtlReading | MessageBoxOptions.RightAlign : 0);
+        MessageBox.Show(text, "PrayerBar", MessageBoxButton.OK, icon, MessageBoxResult.OK, options);
     }
 
     // ---------------------------------------------------------------- taskbar / bar window

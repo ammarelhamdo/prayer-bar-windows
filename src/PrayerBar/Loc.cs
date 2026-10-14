@@ -68,6 +68,10 @@ public static class Loc
         ["Settings.Preview"] = ("Today", "اليوم"),
         ["Settings.Save"] = ("Save", "حفظ"),
         ["Settings.Cancel"] = ("Cancel", "إلغاء"),
+        ["Uninstall.Done"] = ("PrayerBar's settings, cache, startup entry and notification registration were removed. You can now delete PrayerBar.exe.",
+                              "تمت إزالة إعدادات PrayerBar والذاكرة المؤقتة والتشغيل التلقائي وتسجيل الإشعارات. يمكنك الآن حذف PrayerBar.exe."),
+        ["Uninstall.Running"] = ("PrayerBar is running. Choose Exit from its tray menu, then run --uninstall again.",
+                                 "PrayerBar يعمل حالياً. اختر «خروج» من قائمة الأيقونة ثم أعد تشغيل ‎--uninstall."),
         ["Settings.PickCity"] = ("Please choose a city.", "يرجى اختيار المدينة."),
     };
 
