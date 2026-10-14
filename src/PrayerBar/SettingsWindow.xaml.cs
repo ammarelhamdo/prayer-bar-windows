@@ -33,6 +33,8 @@ public partial class SettingsWindow : Window
         (current.IsArabic ? LangAr : LangEn).IsChecked = true;
         (current.AsrSchool == AsrSchool.Hanafi ? AsrHanafi : AsrShafi).IsChecked = true;
         EmbedSwitch.IsChecked = current.EmbedInTaskbar;
+        (current.BarLayout == BarLayout.OneLine ? LayoutOne : LayoutTwo).IsChecked = true;
+        (current.BarWeight switch { BarWeight.Normal => WeightNormal, BarWeight.ExtraBold => WeightExtra, _ => WeightBold }).IsChecked = true;
         AdvancedToggle.IsChecked = current.MethodOverride != null || current.AsrSchool != AsrSchool.Shafi;
         NotifyPicker.Searchable = false;
 
@@ -94,6 +96,13 @@ public partial class SettingsWindow : Window
         AsrShafi.Content = Loc.T("Settings.Shafi");
         AsrHanafi.Content = Loc.T("Settings.Hanafi");
         EmbedSwitch.Content = Loc.T("Settings.Embed");
+        LayoutLabel.Text = Loc.T("Settings.Layout");
+        LayoutTwo.Content = Loc.T("Settings.TwoLines");
+        LayoutOne.Content = Loc.T("Settings.OneLine");
+        WeightLabel.Text = Loc.T("Settings.Weight");
+        WeightNormal.Content = Loc.T("Settings.WeightNormal");
+        WeightBold.Content = Loc.T("Settings.WeightBold");
+        WeightExtra.Content = Loc.T("Settings.WeightExtra");
         SaveButton.Content = Loc.T("Settings.Save");
         CancelButton.Content = Loc.T("Settings.Cancel");
 
@@ -216,6 +225,9 @@ public partial class SettingsWindow : Window
         }
         _draft.NotifyMinutes = NotifyPicker.SelectedValue is int n ? n : _draft.NotifyMinutes;
         _draft.EmbedInTaskbar = EmbedSwitch.IsChecked == true;
+        _draft.BarLayout = LayoutOne.IsChecked == true ? BarLayout.OneLine : BarLayout.TwoLines;
+        _draft.BarWeight = WeightNormal.IsChecked == true ? BarWeight.Normal
+                         : WeightExtra.IsChecked == true ? BarWeight.ExtraBold : BarWeight.Bold;
         try
         {
             _draft.Save();

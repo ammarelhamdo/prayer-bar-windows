@@ -55,6 +55,27 @@
             </Grid>
         </Border>
 
+        <!-- Appearance of the taskbar label -->
+        <Border Style="{StaticResource Card}">
+            <StackPanel>
+                <DockPanel Margin="0,0,0,10">
+                    <TextBlock x:Name="LayoutLabel" Style="{StaticResource Label}" />
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <RadioButton x:Name="LayoutTwo" Style="{StaticResource Segment}" GroupName="layout" />
+                        <RadioButton x:Name="LayoutOne" Style="{StaticResource Segment}" GroupName="layout" />
+                    </StackPanel>
+                </DockPanel>
+                <DockPanel>
+                    <TextBlock x:Name="WeightLabel" Style="{StaticResource Label}" />
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <RadioButton x:Name="WeightNormal" Style="{StaticResource Segment}" GroupName="weight" FontWeight="Normal" />
+                        <RadioButton x:Name="WeightBold" Style="{StaticResource Segment}" GroupName="weight" FontWeight="Bold" />
+                        <RadioButton x:Name="WeightExtra" Style="{StaticResource Segment}" GroupName="weight" FontWeight="Black" />
+                    </StackPanel>
+                </DockPanel>
+            </StackPanel>
+        </Border>
+
         <!-- Notifications -->
         <Border Style="{StaticResource Card}">
             <DockPanel>

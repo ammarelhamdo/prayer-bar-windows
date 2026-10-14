@@ -80,14 +80,58 @@ public partial class BarWindow : Window
 
     // ------------------------------------------------------------------ content
 
-    /// <summary>Updates the label. <paramref name="warning"/> switches to amber (&lt; 10 min left).
-    /// Direction follows the UI language so "الفجر ⏳ 01:02:03" and "Fajr ⏳ 01:02:03" both read naturally.</summary>
-    public void SetText(string text, bool warning, FlowDirection flow)
+    /// <summary>
+    /// Updates the label: prayer name and countdown. <paramref name="warning"/> switches to amber
+    /// (&lt; 10 min left). <paramref name="flow"/> follows the UI language so the one-line form reads
+    /// "الفجر ⏳ 05:31:16" in Arabic and "Fajr ⏳ 05:31:16" in English.
+    /// </summary>
+    public void SetContent(string name, string countdown, bool warning, FlowDirection flow)
     {
-        if (Label.FlowDirection != flow) Label.FlowDirection = flow;
-        if (Label.Text != text) Label.Text = text;
+        if (Lines.FlowDirection != flow) Lines.FlowDirection = flow;
+        NameText.FlowDirection = flow;
+        var nameText = _layout == BarLayout.OneLine ? name + " ⏳ " : name;
+        if (NameText.Text != nameText) NameText.Text = nameText;
+        if (TimeText.Text != countdown) TimeText.Text = countdown;
         _warning = warning;
         ApplyForeground();
+    }
+
+    private BarLayout _layout = BarLayout.TwoLines;
+
+    /// <summary>
+    /// One line (name ⏳ time) or two lines like the Windows 11 clock: the name on top and a
+    /// larger countdown below. <paramref name="weight"/> applies to both lines.
+    /// </summary>
+    public void ApplyStyle(BarLayout layout, BarWeight weight)
+    {
+        _layout = layout;
+        // At taskbar sizes (12-14 px) pixel-snapped text draws SemiBold with the same 1-px stems as
+        // Regular, so the choices are Regular, Bold and Black - three weights that visibly differ.
+        var fw = weight switch
+        {
+            BarWeight.Normal => FontWeights.Normal,
+            BarWeight.ExtraBold => FontWeights.Black,
+            _ => FontWeights.Bold,
+        };
+        NameText.FontWeight = fw;
+        TimeText.FontWeight = fw;
+
+        if (layout == BarLayout.TwoLines)
+        {
+            Lines.Orientation = System.Windows.Controls.Orientation.Vertical;
+            NameText.FontSize = 12;
+            TimeText.FontSize = 14;                         // the numbers are what you glance at
+            TimeText.Margin = new Thickness(0, -3, 0, 0);   // tighten the gap between the lines
+        }
+        else
+        {
+            Lines.Orientation = System.Windows.Controls.Orientation.Horizontal;
+            NameText.FontSize = 12;
+            TimeText.FontSize = 13;
+            TimeText.Margin = new Thickness(0);
+        }
+        // Strip/add the "⏳" separator for the new layout on the next SetContent.
+        NameText.Text = "";
     }
 
     public void SetToolTip(string? text) =>
@@ -99,8 +143,12 @@ public partial class BarWindow : Window
     private Brush? _warningBrush;
     private bool _warning;
 
-    private void ApplyForeground() =>
-        Label.Foreground = _warning ? (_warningBrush ?? WarningBrush) : _normalBrush;
+    private void ApplyForeground()
+    {
+        var brush = _warning ? (_warningBrush ?? WarningBrush) : _normalBrush;
+        NameText.Foreground = brush;
+        TimeText.Foreground = brush;
+    }
 
     private static Brush Frozen(Color c)
     {
@@ -229,7 +277,7 @@ public partial class BarWindow : Window
         // floating, it hugs the text. Vertical taskbars (not on Windows 11) also hug the text.
         double h = horizontal && Mode != BarMode.Floating
             ? tb.Height / scale
-            : Math.Max(20, Math.Ceiling(Label.DesiredSize.Height) + Root.Padding.Top + Root.Padding.Bottom);
+            : Math.Max(20, Math.Ceiling(Lines.DesiredSize.Height) + Root.Padding.Top + Root.Padding.Bottom);
         if (Math.Abs(Height - h) > 0.5) Height = h;
         UpdateLayout();
 

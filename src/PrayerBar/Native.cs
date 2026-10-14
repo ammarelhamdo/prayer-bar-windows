@@ -2,6 +2,10 @@ using System.Runtime.InteropServices;
 
 namespace PrayerBar;
 
+/// <summary>
+/// Win32 P/Invoke declarations used to find, measure and embed into the Windows taskbar.
+/// Kept in one place so the interop surface of the app is easy to audit.
+/// </summary>
 internal static class Native
 {
     [StructLayout(LayoutKind.Sequential)]
@@ -13,16 +17,6 @@ internal static class Native
         public override readonly string ToString() => $"{Left},{Top},{Right},{Bottom}";
     }
 
-    [StructLayout(LayoutKind.Sequential)]
-    public struct APPBARDATA
-    {
-        public int cbSize;
-        public IntPtr hWnd;
-        public uint uCallbackMessage;
-        public uint uEdge;
-        public RECT rc;
-        public IntPtr lParam;
-    }
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
     public struct MONITORINFO
@@ -61,8 +55,6 @@ internal static class Native
         public int X, Y;
     }
 
-    public const uint ABM_GETSTATE = 0x00000004;
-    public const int ABS_AUTOHIDE = 0x0000001;
 
     public const uint MONITOR_DEFAULTTONEAREST = 2;
 
@@ -143,12 +135,5 @@ internal static class Native
         return sb.ToString();
     }
 
-    [DllImport("shell32.dll")]
-    public static extern IntPtr SHAppBarMessage(uint msg, ref APPBARDATA data);
 
-    public static bool IsTaskbarAutoHide()
-    {
-        var data = new APPBARDATA { cbSize = Marshal.SizeOf<APPBARDATA>() };
-        return ((long)SHAppBarMessage(ABM_GETSTATE, ref data) & ABS_AUTOHIDE) != 0;
-    }
 }

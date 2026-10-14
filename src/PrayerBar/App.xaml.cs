@@ -184,6 +184,7 @@ public partial class App : Application
         _bar.Closed += OnBarClosed;
         _bar.MouseRightButtonUp += (_, _) => _tray?.ShowMenu(System.Windows.Forms.Cursor.Position);
         _bar.MouseLeftButtonUp += (_, _) => ShowSettings();
+        _bar.ApplyStyle(_settings.BarLayout, _settings.BarWeight);
         _bar.Show();
         UpdateBarToolTip();
     }
@@ -304,7 +305,7 @@ public partial class App : Application
             RecreateBar();
             if (_bar == null) return;
         }
-        _bar.SetText($"{name} ⏳ {countdown}", remaining < WarningThreshold, Loc.Flow);
+        _bar.SetContent(name, countdown, remaining < WarningThreshold, Loc.Flow);
         _bar.Reposition();
 
         _tray?.SetStatus(Loc.T("Tray.In", name, countdown), $"PrayerBar — {name} {FormatTime(next.Time)}");
@@ -391,6 +392,7 @@ public partial class App : Application
         _scheduleDate = default;
         if (timesChanged) _notified.Clear();
         if (updated.EmbedInTaskbar != old.EmbedInTaskbar) RecreateBar();
+        else _bar?.ApplyStyle(updated.BarLayout, updated.BarWeight);
 
         ApplyLanguage(); // also ticks, which rebuilds the schedule for the new city
         if (timesChanged) _ = RefreshAsync(force: true, announce: true);

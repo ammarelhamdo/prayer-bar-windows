@@ -4,6 +4,14 @@ using System.Text.Json.Serialization;
 
 namespace PrayerBar;
 
+/// <summary>How the countdown is laid out on the taskbar. Stored by name in settings.json.</summary>
+[JsonConverter(typeof(JsonStringEnumConverter<BarLayout>))]
+public enum BarLayout { TwoLines, OneLine }
+
+/// <summary>Text weight of the taskbar label. Stored by name in settings.json.</summary>
+[JsonConverter(typeof(JsonStringEnumConverter<BarWeight>))]
+public enum BarWeight { Bold, ExtraBold, Normal }
+
 /// <summary>
 /// User settings, stored as JSON in %AppData%\PrayerBar\settings.json.
 /// Property names are kept stable so older files still load (unknown/missing keys use defaults).
@@ -43,6 +51,11 @@ public sealed class AppSettings
     /// a TopMost window that follows the taskbar is used instead.
     /// </summary>
     public bool EmbedInTaskbar { get; set; } = true;
+
+    /// <summary>Two lines (name above, larger countdown below) or one line.</summary>
+    public BarLayout BarLayout { get; set; } = BarLayout.TwoLines;
+
+    public BarWeight BarWeight { get; set; } = BarWeight.Bold;
 
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
 
