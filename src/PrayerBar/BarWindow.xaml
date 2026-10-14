@@ -21,7 +21,7 @@
                    FontFamily="Segoe UI Variable Text, Segoe UI"
                    FontSize="12"
                    TextOptions.TextFormattingMode="Display"
-                   TextOptions.TextRenderingMode="ClearType"
+                   TextOptions.TextRenderingMode="Grayscale"
                    Text="…" />
     </Border>
 </Window>

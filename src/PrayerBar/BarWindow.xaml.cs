@@ -36,6 +36,20 @@ public partial class BarWindow : Window
     /// <summary>True when the taskbar this window was attached to has been destroyed (Explorer restart).</summary>
     public bool IsOrphaned => _taskbar != IntPtr.Zero && !Native.IsWindow(_taskbar);
 
+    /// <summary>
+    /// True when the taskbar's DPI differs from the DPI WPF renders this window at. Embedded child
+    /// windows do not get WM_DPICHANGED, so the app recreates the bar when this happens.
+    /// </summary>
+    public bool DpiMismatch
+    {
+        get
+        {
+            if (_hwnd == IntPtr.Zero || _taskbar == IntPtr.Zero || !Native.IsWindow(_taskbar)) return false;
+            uint taskbarDpi = Native.GetDpiForWindow(_taskbar);
+            return taskbarDpi != 0 && Math.Abs(VisualTreeHelper.GetDpi(this).PixelsPerInchX - taskbarDpi) > 0.5;
+        }
+    }
+
     public void SetText(string text, bool warning)
     {
         if (Label.Text != text) Label.Text = text;
@@ -46,7 +60,12 @@ public partial class BarWindow : Window
     private void ApplyForeground() =>
         Label.Foreground = _warning ? (_warningBrush ?? WarningBrush) : _normalBrush;
 
-    public void SetToolTip(string? text) => Root.ToolTip = text;
+    public void SetToolTip(string? text) =>
+        Root.ToolTip = text == null ? null : new System.Windows.Controls.ToolTip
+        {
+            Content = text,
+            FlowDirection = FlowDirection.RightToLeft,
+        };
 
     private static readonly Brush WarningBrush = Frozen(Color.FromRgb(0xFF, 0xB3, 0x00));
     private Brush _normalBrush = Brushes.White;
